@@ -53,3 +53,39 @@ allSeq2freqProb(seqMat) {
   
   
 }
+
+library(parallel)
+# Calculate the number of cores
+no_cores <- detectCores() - 1
+# Initiate cluster
+cl <- makeCluster(no_cores)
+
+statesNames=c("a","b","c")
+mcA<-new("markovchain", states=statesNames, transitionMatrix=matrix(c(0.2,0.5,0.3,0,0.2,0.8,0.1,0.8,0.1),nrow=3, byrow=TRUE, dimnames=list(statesNames,statesNames)))
+mcB<-new("markovchain", states=statesNames, transitionMatrix=matrix(c(0.2,0.5,0.3,0,0.2,0.8,0.1,0.8,0.1),nrow=3, byrow=TRUE, dimnames=list(statesNames,statesNames)))
+mcC<-new("markovchain", states=statesNames, transitionMatrix=matrix(c(0.2,0.5,0.3,0,0.2,0.8,0.1,0.8,0.1),nrow=3, byrow=TRUE, dimnames=list(statesNames,statesNames))) 
+mclist <- new("markovchainList", markovchains = list(mcA, mcB, mcC))   
+mc <- mclist
+
+clusterExport(cl, "mclist")
+
+f <- function(x) {
+  n <- length(mclist@markovchains)
+  seq <- character(length = n)
+  
+  t0  <- (mclist@markovchains[[1]]@states)[1]
+  
+  
+  for(i in 1:n) {
+    stateName <- mclist@markovchains[[i]]@states
+    t0 <- sample(x = stateName, size = 1, 
+           prob = mclist@markovchains[[i]]@transitionMatrix[which(stateName == t0 ), ]) 
+    
+    seq[i] <- t0
+  } 
+  return(seq)
+}
+
+data <- parSapply(cl, 1:10,f)
+
+stopCluster(cl)
