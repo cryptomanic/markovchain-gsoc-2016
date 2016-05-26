@@ -89,3 +89,45 @@ f <- function(x) {
 data <- parSapply(cl, 1:10,f)
 
 stopCluster(cl)
+
+
+struct SequenceMC : public Worker
+{   
+  // source
+  List tmatList;
+  
+  // store results
+  List output;
+  List temp
+  CharacterVector help
+  
+  // constructors
+  sequenceMC(List tmat, int n) : tmatList(tmat), help(n) {}
+  
+  // process just the elements of the range I've been asked to
+  void operator()(std::size_t begin, std::size_t end) {
+    int n = end-begin;
+    int m = help.size()
+    temp = markovchainListRcpp(n, tmatList, false); 
+    
+    for(int i = 0;i < n;i++) {
+      for(int j = 0;j < m;j++) {
+        help[j] = temp[1][m*i+j];
+      }  
+      output.push_back(help);
+    }
+  }
+};
+
+// [[Rcpp::export]]
+List markovchainSequenceParallelRcpp(S4 object, int n) {
+  
+  List tmatList = object.slot("markovchains")
+  
+  SequenceMC sequenceMC(tmatList, tmatList.size());
+  
+  // call it with parallelFor
+  parallelReduce(0, n, sequenceMC);
+  
+  return sequenceMC.output;
+}
