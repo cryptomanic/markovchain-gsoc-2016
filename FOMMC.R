@@ -131,3 +131,17 @@ List markovchainSequenceParallelRcpp(S4 object, int n) {
   
   return sequenceMC.output;
 }
+
+
+# better version of .checkSequence add this
+
+# select the states which are reachable in one step
+    if(object[[i - 1]]@byrow) {
+      reachable <- (colSums(object[[i - 1]]@transitionMatrix) != 0)
+    } else {
+      reachable <- (rowSums(object[[i - 1]]@transitionMatrix) != 0)
+    }
+    
+    # possible states in the previous markovchain object
+    statesNm1 <- states(object[[i - 1]])[reachable]
+    
